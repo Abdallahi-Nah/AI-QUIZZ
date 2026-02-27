@@ -72,7 +72,7 @@ app.post("/api/gemini", async (req, res) => {
   if (!key) return res.status(500).json({ error: "GEMINI_API_KEY manquante. Ajoutez-la dans Vercel → Settings → Environment Variables" });
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${key}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
     const r = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
