@@ -47,6 +47,10 @@
     .tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:11px;margin-bottom:46px}
     .tc{background:var(--surf);border:1px solid var(--bdr);border-radius:18px;padding:20px 16px;cursor:pointer;transition:all .22s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden;user-select:none}
     .tc::after{content:'';position:absolute;inset:0;background:var(--c,#7C6FFF);opacity:0;transition:opacity .22s;border-radius:inherit}
+    .tc.wide{grid-column:1/-1;display:flex;align-items:center;gap:20px;padding:24px}
+    .tc.wide .ti{font-size:40px;margin-bottom:0}
+    .tc.wide .tn{font-size:1.1rem;font-weight:800}
+    .tc.wide .tw_desc{font-size:.85rem;color:var(--mut2);font-weight:400;margin-top:4px}
     .tc:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.14)}
     .tc:hover::after{opacity:.05}
     .tc.sel{border-color:var(--c,#7C6FFF);transform:translateY(-3px)}
@@ -256,6 +260,7 @@
     <div class="ol2" id="opts"></div>
     <div class="qnv">
       <button class="nb" id="pBtn" onclick="nav(-1)" disabled>← Précédent</button>
+      <button class="nb" style="border-color:rgba(255,77,109,.3);color:var(--red)" onclick="quitQuiz()">Quitter ✕</button>
       <button class="nb" id="nBtn" onclick="nav(1)">Suivant →</button>
       <button class="sbb" id="subBtn" onclick="submit()" style="display:none">Soumettre ✓</button>
     </div>
@@ -323,6 +328,7 @@
 // DATA
 // ════════════════════════════════════════
 const TOPICS=[
+  {id:"all",          n:"Examen Général",                  i:"🎓", c:"#FFD700", wide:true, desc:"100 questions · 90 minutes · Tous les sujets"},
   {id:"concepts",     n:"Concepts Fondamentaux des SI",    i:"🧠", c:"#7C6FFF"},
   {id:"erp_crm",      n:"ERP / CRM / SCM",                 i:"🔗", c:"#00D4AA"},
   {id:"bdd",          n:"Bases de Données & SQL",           i:"🗄️", c:"#F7971E"},
@@ -368,7 +374,7 @@ const MODELS=[
 // ════════════════════════════════════════
 const S={
   topic:null, model:"claude", count:10, time:60,
-  qs:[], ans:{}, cur:0, timer:null, tLeft:60,
+  qs:[], ans:{}, cur:0, timer:null, tLeft:60, isExam:false,
 };
 
 // ════════════════════════════════════════
@@ -377,9 +383,12 @@ const S={
 (function init(){
   // Topics grid
   document.getElementById("tGrid").innerHTML=TOPICS.map(t=>`
-    <div class="tc" id="tc_${t.id}" style="--c:${t.c}" onclick="pickTopic('${t.id}')">
+    <div class="tc ${t.wide?"wide":""}" id="tc_${t.id}" style="--c:${t.c}" onclick="pickTopic('${t.id}')">
       <span class="ti">${t.i}</span>
-      <div class="tn">${t.n}</div>
+      <div>
+        <div class="tn">${t.n}</div>
+        ${t.desc?`<div class="tw_desc">${t.desc}</div>`:""}
+      </div>
       <div class="tck">✓</div>
     </div>`).join("");
 
@@ -404,7 +413,36 @@ function pickTopic(id){
   document.querySelectorAll(".tc").forEach(e=>e.classList.remove("sel"));
   document.getElementById("tc_"+id)?.classList.add("sel");
   S.topic=id;
+  S.isExam = (id === "all");
+  
+  if(S.isExam) {
+    S.count = 100;
+    S.time = 5400; // 90 minutes
+  } else {
+    // Reset defaults if switching back from exam
+    if(S.count === 100) S.count = 10;
+    if(S.time === 5400) S.time = 60;
+  }
+  
+  updModalPresets();
   document.getElementById("gBtn").disabled=false;
+}
+
+function updModalPresets(){
+  // Update UI to reflect changes in S.count and S.time
+  document.querySelectorAll(".cb").forEach(e => {
+    e.classList.toggle("sc", parseInt(e.textContent) === S.count);
+  });
+  document.querySelectorAll(".tb").forEach(e => {
+    e.classList.toggle("st", parseInt(e.textContent) === S.time);
+  });
+  
+  // Disable options if in Exam mode
+  document.querySelectorAll(".cb, .tb").forEach(e => {
+    e.disabled = S.isExam;
+    e.style.opacity = S.isExam ? "0.5" : "1";
+    e.style.cursor = S.isExam ? "not-allowed" : "pointer";
+  });
 }
 function pickModel(id){
   S.model=id;
@@ -450,7 +488,11 @@ Exemple de question avec code :
   "options": { "A": "5", "B": "8", "C": "13", "D": "Erreur" }
 }`:""
 
-  return `You are a university professor in Computer Science and Information Systems. Generate exactly ${count} MCQ (QCM) in French on: "${desc}".
+  const topicContext = topicId === "all" 
+    ? "tous les sujets des Systèmes d'Information (Concepts, ERP/CRM, BDD/SQL, Architecture, Gouvernance, Sécurité, BI, Gestion de projet, Cloud, Urbanisation, OOP, Structures, Algo)"
+    : desc;
+
+  return `You are a university professor in Computer Science and Information Systems. Generate exactly ${count} MCQ (QCM) in French on: "${topicContext}".
 
 Difficulty: ${easy} "Facile" + ${med} "Moyen" + ${hard} "Difficile".
 ${codeInstr}
@@ -558,7 +600,7 @@ function renderQ(){
   document.getElementById("dots").innerHTML=S.qs.map((_,i)=>`
     <div class="dot ${i===S.cur?"cu":""} ${S.ans[i]?"ha":""}" onclick="jumpQ(${i})"></div>`).join("");
 
-  startTimer();
+  if(!S.isExam || S.cur === 0) startTimer();
   Prism.highlightAll();
 }
 
@@ -605,21 +647,30 @@ function escHtml(s){
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
+function quitQuiz(){
+  if(confirm("Voulez-vous vraiment quitter le quiz ? Votre progression sera perdue.")){
+    stopTimer();
+    showPage("pH");
+  }
+}
+
 // ════════════════════════════════════════
 // TIMER
 // ════════════════════════════════════════
 const CIRC=2*Math.PI*21; // r=21
 
 function startTimer(){
+  if(S.isExam && S.timer) return; // Don't restart global timer
   stopTimer();
-  S.tLeft=S.time;
+  if(!S.isExam || S.cur === 0) S.tLeft=S.time;
   updTimer();
   S.timer=setInterval(()=>{
     S.tLeft--;
     updTimer();
     if(S.tLeft<=0){
       stopTimer();
-      if(S.cur<S.qs.length-1){S.cur++;renderQ();}
+      if(S.isExam) submit();
+      else if(S.cur<S.qs.length-1){S.cur++;renderQ();}
       else submit();
     }
   },1000);
@@ -629,12 +680,26 @@ function stopTimer(){ if(S.timer){clearInterval(S.timer);S.timer=null;} }
 
 function updTimer(){
   const pct=S.tLeft/S.time;
-  const col=S.tLeft<=10?"#FF4D6D":S.tLeft<=20?"#FFB020":"#7C6FFF";
+  const col=S.tLeft<=300?"#FF4D6D":S.tLeft<=600?"#FFB020":"#7C6FFF";
   const arc=document.getElementById("tArc");
   arc.style.stroke=col;
   arc.setAttribute("stroke-dasharray",CIRC);
   arc.setAttribute("stroke-dashoffset",CIRC*(1-pct));
-  document.getElementById("tLbl").textContent=S.tLeft;
+  
+  let timeStr = "";
+  if(S.tLeft >= 3600) {
+    const h = Math.floor(S.tLeft/3600);
+    const m = Math.floor((S.tLeft % 3600) / 60);
+    timeStr = `${h}h${m.toString().padStart(2,'0')}`;
+  } else if(S.tLeft >= 60) {
+    const m = Math.floor(S.tLeft/60);
+    const s = S.tLeft % 60;
+    timeStr = `${m}:${s.toString().padStart(2,'0')}`;
+  } else {
+    timeStr = S.tLeft;
+  }
+  
+  document.getElementById("tLbl").textContent=timeStr;
   document.getElementById("tLbl").style.color=col;
 }
 
