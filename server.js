@@ -13,7 +13,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // ─── CLAUDE (Anthropic) ───────────────────────────────
 app.post("/api/claude", async (req, res) => {
   const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return res.status(500).json({ error: "ANTHROPIC_API_KEY manquante dans .env" });
+  if (!key) return res.status(500).json({ error: "ANTHROPIC_API_KEY manquante. Ajoutez-la dans Vercel → Settings → Environment Variables" });
 
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
@@ -30,7 +30,7 @@ app.post("/api/claude", async (req, res) => {
       }),
     });
     const data = await r.json();
-    if (!r.ok) return res.status(r.status).json({ error: data?.error?.message || "Erreur Claude" });
+    if (!r.ok) return res.status(r.status).json({ error: data?.error?.message || "Erreur Claude API" });
     const text = (data.content || []).map(b => b.text || "").join("");
     res.json({ text });
   } catch (e) {
@@ -41,7 +41,7 @@ app.post("/api/claude", async (req, res) => {
 // ─── CHATGPT (OpenAI) ─────────────────────────────────
 app.post("/api/chatgpt", async (req, res) => {
   const key = process.env.OPENAI_API_KEY;
-  if (!key) return res.status(500).json({ error: "OPENAI_API_KEY manquante dans .env" });
+  if (!key) return res.status(500).json({ error: "OPENAI_API_KEY manquante. Ajoutez-la dans Vercel → Settings → Environment Variables" });
 
   try {
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -58,7 +58,7 @@ app.post("/api/chatgpt", async (req, res) => {
       }),
     });
     const data = await r.json();
-    if (!r.ok) return res.status(r.status).json({ error: data?.error?.message || "Erreur OpenAI" });
+    if (!r.ok) return res.status(r.status).json({ error: data?.error?.message || "Erreur OpenAI API" });
     const text = data.choices?.[0]?.message?.content || "";
     res.json({ text });
   } catch (e) {
@@ -69,7 +69,7 @@ app.post("/api/chatgpt", async (req, res) => {
 // ─── GEMINI (Google) ──────────────────────────────────
 app.post("/api/gemini", async (req, res) => {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) return res.status(500).json({ error: "GEMINI_API_KEY manquante dans .env" });
+  if (!key) return res.status(500).json({ error: "GEMINI_API_KEY manquante. Ajoutez-la dans Vercel → Settings → Environment Variables" });
 
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${key}`;
@@ -86,7 +86,7 @@ app.post("/api/gemini", async (req, res) => {
       }),
     });
     const data = await r.json();
-    if (!r.ok) return res.status(r.status).json({ error: data?.error?.message || "Erreur Gemini" });
+    if (!r.ok) return res.status(r.status).json({ error: data?.error?.message || "Erreur Gemini API" });
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
     res.json({ text });
   } catch (e) {
@@ -94,8 +94,17 @@ app.post("/api/gemini", async (req, res) => {
   }
 });
 
-// ─── Fallback → SPA ──────────────────────────────────
-app.get("*", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+// ─── Toutes les autres routes → index.html ────────────
+app.get("*", (_, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅  Quiz SI lancé → http://localhost:${PORT}`));
+// ─── Démarrage local uniquement ───────────────────────
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`✅  Quiz SI lancé → http://localhost:${PORT}`);
+  });
+}
+
+export default app;
