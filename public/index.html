@@ -214,6 +214,7 @@
         <div class="mcc"><span>✦</span> Claude AI</div>
         <div class="mcc"><span>⬡</span> ChatGPT</div>
         <div class="mcc"><span>✧</span> Gemini</div>
+        <div class="mcc"><span>⚡</span> Groq</div>
       </div>
     </div>
     <div class="sl">— Choisissez un thème</div>
@@ -298,7 +299,7 @@
     <div class="mt">Configurer la session</div>
     <div class="ms2" id="mSub"></div>
     <div class="fl">Modèle IA</div>
-    <div class="mr" id="mRow"></div>
+    <div class="mr" id="mRow" style="grid-template-columns: repeat(2, 1fr);"></div>
     <div class="fl">Nombre de questions</div>
     <div class="cr" id="cRow"></div>
     <div class="fl">Temps par question</div>
@@ -359,6 +360,7 @@ const MODELS=[
   {id:"claude", n:"Claude AI",  l:"✦", m:"claude-sonnet-4-6"},
   {id:"chatgpt",n:"ChatGPT",   l:"⬡", m:"gpt-4o"},
   {id:"gemini", n:"Gemini",    l:"✧", m:"gemini-1.5-pro"},
+  {id:"groq",   n:"Groq AI",   l:"⚡", m:"llama-3.3-70b"},
 ];
 
 // ════════════════════════════════════════
