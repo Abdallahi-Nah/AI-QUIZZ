@@ -10,66 +10,10 @@ const app = express();
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// ─── CLAUDE (Anthropic) ───────────────────────────────
-app.post("/api/claude", async (req, res) => {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return res.status(500).json({ error: "ANTHROPIC_API_KEY manquante. Ajoutez-la dans Vercel → Settings → Environment Variables" });
-
-  try {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 8000,
-        messages: [{ role: "user", content: req.body.prompt }],
-      }),
-    });
-    const data = await r.json();
-    if (!r.ok) return res.status(r.status).json({ error: data?.error?.message || "Erreur Claude API" });
-    const text = (data.content || []).map(b => b.text || "").join("");
-    res.json({ text });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// ─── CHATGPT (OpenAI) ─────────────────────────────────
-app.post("/api/chatgpt", async (req, res) => {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return res.status(500).json({ error: "OPENAI_API_KEY manquante. Ajoutez-la dans Vercel → Settings → Environment Variables" });
-
-  try {
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${key}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        max_tokens: 8000,
-        response_format: { type: "json_object" },
-        messages: [{ role: "user", content: req.body.prompt }],
-      }),
-    });
-    const data = await r.json();
-    if (!r.ok) return res.status(r.status).json({ error: data?.error?.message || "Erreur OpenAI API" });
-    const text = data.choices?.[0]?.message?.content || "";
-    res.json({ text });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// ─── GEMINI (Google) ──────────────────────────────────
+// ─── GEMINI 2.0 Flash (GRATUIT) ──────────────────────
 app.post("/api/gemini", async (req, res) => {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) return res.status(500).json({ error: "GEMINI_API_KEY manquante. Ajoutez-la dans Vercel → Settings → Environment Variables" });
+  if (!key) return res.status(500).json({ error: "GEMINI_API_KEY manquante dans les variables d'environnement Vercel" });
 
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
@@ -94,17 +38,100 @@ app.post("/api/gemini", async (req, res) => {
   }
 });
 
-// ─── Toutes les autres routes → index.html ────────────
+// ─── GROQ (GRATUIT — Llama 3.3 70B) ─────────────────
+app.post("/api/groq", async (req, res) => {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) return res.status(500).json({ error: "GROQ_API_KEY manquante dans les variables d'environnement Vercel" });
+
+  try {
+    const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        max_tokens: 8000,
+        temperature: 0.7,
+        response_format: { type: "json_object" },
+        messages: [{ role: "user", content: req.body.prompt }],
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) return res.status(r.status).json({ error: data?.error?.message || "Erreur Groq API" });
+    const text = data.choices?.[0]?.message?.content || "";
+    res.json({ text });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── CLAUDE (payant — optionnel) ─────────────────────
+app.post("/api/claude", async (req, res) => {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(500).json({ error: "ANTHROPIC_API_KEY manquante dans les variables d'environnement Vercel" });
+
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 8000,
+        messages: [{ role: "user", content: req.body.prompt }],
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) return res.status(r.status).json({ error: data?.error?.message || "Erreur Claude API" });
+    const text = (data.content || []).map(b => b.text || "").join("");
+    res.json({ text });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── CHATGPT (payant — optionnel) ────────────────────
+app.post("/api/chatgpt", async (req, res) => {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return res.status(500).json({ error: "OPENAI_API_KEY manquante dans les variables d'environnement Vercel" });
+
+  try {
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        max_tokens: 8000,
+        response_format: { type: "json_object" },
+        messages: [{ role: "user", content: req.body.prompt }],
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) return res.status(r.status).json({ error: data?.error?.message || "Erreur OpenAI API" });
+    const text = data.choices?.[0]?.message?.content || "";
+    res.json({ text });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── Fallback → index.html ────────────────────────────
 app.get("*", (_, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// ─── Démarrage local uniquement ───────────────────────
+// ─── Local only ───────────────────────────────────────
 if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`✅  Quiz SI lancé → http://localhost:${PORT}`);
-  });
+  app.listen(PORT, () => console.log(`✅  http://localhost:${PORT}`));
 }
 
 export default app;
