@@ -1,62 +1,67 @@
-# 🎓 Quiz SI — Préparation aux Examens
+# 🎓 Quiz SI — Guide de démarrage
 
-Application de quiz interactif pour les Systèmes d'Information, propulsée par Claude AI, ChatGPT et Gemini.
+## ✅ Démarrer en 4 commandes
 
----
-
-## 🚀 Déploiement sur Vercel (3 étapes)
-
-### 1. Installer les dépendances
 ```bash
+# 1. Entrer dans le dossier
+cd quiz-si
+
+# 2. Installer les dépendances
 npm install
+
+# 3. Copier et remplir le fichier de configuration
+cp .env.example .env
+# → Ouvrez .env et remplacez les clés par les vôtres
+
+# 4. Lancer le serveur
+npm start
 ```
 
-### 2. Pousser sur GitHub
-```bash
-git init
-git add .
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/VOTRE_USERNAME/quiz-si.git
-git push -u origin main
-```
-
-### 3. Déployer sur Vercel
-1. Allez sur [vercel.com](https://vercel.com) → **Add New Project**
-2. Importez votre repo GitHub
-3. Dans **Settings → Environment Variables**, ajoutez :
-
-| Variable | Valeur |
-|----------|--------|
-| `ANTHROPIC_API_KEY` | `sk-ant-...` |
-| `OPENAI_API_KEY` | `sk-...` |
-| `GEMINI_API_KEY` | `AIza...` |
-
-4. Cliquez **Deploy** ✅
+Ouvrez ensuite http://localhost:3000 dans votre navigateur. ✅
 
 ---
 
-## 💻 Développement local
+## 🔑 Obtenir les clés API
 
-```bash
-# 1. Copiez le fichier d'environnement
-cp .env.example .env.local
+### Claude AI (obligatoire pour tester)
+1. Allez sur https://console.anthropic.com
+2. Créez un compte (gratuit)
+3. Cliquez sur "API Keys" → "Create Key"
+4. Copiez la clé (commence par `sk-ant-`)
 
-# 2. Ajoutez vos clés API dans .env.local
+### ChatGPT (optionnel)
+1. Allez sur https://platform.openai.com/api-keys
+2. Créez un compte → "Create new secret key"
+3. Copiez la clé (commence par `sk-`)
 
-# 3. Lancez le serveur
-npm run dev
-```
+### Gemini (optionnel)
+1. Allez sur https://aistudio.google.com/app/apikey
+2. Connectez-vous avec Google → "Create API key"
+3. Copiez la clé (commence par `AIza`)
 
 ---
 
-## 🔑 Où obtenir les clés API
+## 🌐 Déployer sur Vercel (gratuit)
 
-| Modèle | Lien |
-|--------|------|
-| Claude AI | https://console.anthropic.com |
-| ChatGPT | https://platform.openai.com/api-keys |
-| Gemini | https://aistudio.google.com/app/apikey |
+```bash
+# Installer Vercel CLI
+npm install -g vercel
+
+# Se connecter
+vercel login
+
+# Déployer
+vercel --prod
+```
+
+Pendant le déploiement, Vercel vous demande les variables d'environnement.
+Ou ajoutez-les dans : Dashboard Vercel → Settings → Environment Variables
+
+| Nom | Valeur |
+|-----|--------|
+| ANTHROPIC_API_KEY | sk-ant-... |
+| OPENAI_API_KEY | sk-... |
+| GEMINI_API_KEY | AIza... |
 
 ---
 
@@ -64,27 +69,22 @@ npm run dev
 
 ```
 quiz-si/
-├── api/
-│   ├── claude.js      ← API Route Claude (Anthropic)
-│   ├── chatgpt.js     ← API Route ChatGPT (OpenAI)
-│   └── gemini.js      ← API Route Gemini (Google)
-├── src/
-│   ├── App.jsx        ← Application principale
-│   └── main.jsx       ← Point d'entrée React
-├── index.html
+├── server.js          ← Serveur Express (proxy API, résout CORS)
 ├── package.json
-├── vite.config.js
-├── vercel.json
-└── .env.example
+├── .env.example       ← Template des clés
+├── .env               ← Vos clés (à créer, ne pas partager)
+└── public/
+    └── index.html     ← Application complète
 ```
 
 ---
 
-## 🎯 Fonctionnalités
+## 📚 13 Thèmes disponibles
 
-- **10 thèmes** couvrant tout le programme SI
-- **3 modèles IA** : Claude, ChatGPT, Gemini
-- **Distribution intelligente** : 30% Facile, 30% Moyen, 40% Difficile
-- **Timer par question** configurable (30s à 90s)
-- **Nouvelles questions** à chaque tentative
-- **Révision détaillée** avec explications après chaque quiz
+**Systèmes d'Information :**
+Concepts Fondamentaux · ERP/CRM/SCM · Bases de Données & SQL · Architecture · Gouvernance · Sécurité · BI & Data Warehousing · Gestion de Projet SI · Cloud Computing · Urbanisation du SI
+
+**Informatique :**
+🧩 Programmation Orientée Objet (avec exemples de code)
+🌲 Structures de Données (avec exemples de code)
+⚡ Complexité Algorithmique (avec analyse de code)
